@@ -28,14 +28,14 @@ public class Results {
     @Column(name = "resu_result")
     private String result;
 
+    // ✅ FIX: ใช้ @Lob อย่างเดียว (รองรับ MySQL + PostgreSQL)
     @Lob
-    @Column(name = "resu_certificate", columnDefinition = "LONGBLOB")
+    @Column(name = "resu_certificate")
     private byte[] certificate;
 
     @Column(name = "resu_location")
     private String location;
 
-    // ✅ เพิ่มฟิลด์วันที่ตรวจ
     @Column(name = "resu_dateinspection")
     private String dateInspection;
 
