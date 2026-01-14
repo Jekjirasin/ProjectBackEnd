@@ -1,9 +1,18 @@
-FROM eclipse-temurin:17-jdk
+FROM eclipse-temurin:21-jdk-alpine
 
 WORKDIR /app
 
-COPY target/*.jar app.jar
+COPY mvnw .
+COPY .mvn .mvn
+COPY pom.xml .
 
-EXPOSE 8081
+RUN chmod +x mvnw
+RUN ./mvnw dependency:go-offline
 
-ENTRYPOINT ["java","-jar","app.jar"]
+COPY src src
+
+RUN ./mvnw clean package -DskipTests
+
+EXPOSE 8080
+CMD ["java","-jar","target/demo-0.0.1-SNAPSHOT.jar"]
+   
