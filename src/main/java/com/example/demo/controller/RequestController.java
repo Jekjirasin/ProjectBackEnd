@@ -70,7 +70,7 @@ public class RequestController {
         if (status == null || status.isBlank()) {
             throw new IllegalArgumentException("status is required");
         }
-        Request updated = service.updateStatus(id, status.toUpperCase());
+        Request updated = service.updateStatus(id, status.toLowerCase());  
         return toDto(updated);
     }
 

@@ -96,7 +96,7 @@ public class RequestService {
 
         // 5) default status กัน null
         if (req.getStatus() == null || req.getStatus().isBlank()) {
-            req.setStatus("PENDING");
+            req.setStatus("pending");
         }
 
         // 6) บันทึก
