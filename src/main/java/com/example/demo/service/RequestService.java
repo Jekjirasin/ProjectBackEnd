@@ -5,8 +5,11 @@ import com.example.demo.dto.GroupedRequestDTO;
 import com.example.demo.dto.RequestsDTO;
 import com.example.demo.dto.ShopsDTO;
 import com.example.demo.entity.Request;
+import com.example.demo.entity.Shops;
 import com.example.demo.repository.RequestRepository;
 import com.example.demo.repository.ResultsRepository;
+import com.example.demo.repository.ShopRepository;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,11 +25,14 @@ public class RequestService {
 
     private final RequestRepository repository;
     private final ResultsRepository resultsRepository;
+    private final ShopRepository shopRepository;   // ✅ เพิ่ม
 
     public RequestService(RequestRepository repository,
-                          ResultsRepository resultsRepository) {
+                          ResultsRepository resultsRepository,
+                          ShopRepository shopRepository) {   // ✅ เพิ่ม
         this.repository = repository;
         this.resultsRepository = resultsRepository;
+        this.shopRepository = shopRepository;   // ✅ เพิ่ม
     }
 
     // ==========================
@@ -51,12 +57,28 @@ public class RequestService {
 
     @Transactional
     public RequestsDTO createRequest(Request req) {
-        // ตรวจความถูกต้องของข้อมูลที่จำเป็น
+
+        // 1) ตรวจ shop.id
         if (req.getShop() == null || req.getShop().getId() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "shop.id is required");
         }
+
+        // 2) ดึง Shop จริงจาก DB
+        Shops shop = shopRepository.findById(req.getShop().getId())
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Shop not found with id: " + req.getShop().getId()
+                ));
+
+        // 3) set shop ที่เป็น managed entity กลับเข้า req
+        req.setShop(shop);
+
+        // 4) validate location
         if (req.getShopLocation() == null || req.getShopLocation().isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "shopLocation is required (format: 'lat,lng')");
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "shopLocation is required (format: 'lat,lng')"
+            );
         }
 
         // แยก lat,lng จากสตริง "lat,lng"
@@ -64,21 +86,31 @@ public class RequestService {
         double lat = ll[0];
         double lng = ll[1];
 
-        // ✅ กันพิกัดซ้ำในตาราง requests (ร้านอื่นใช้พิกัดเดียวกันอยู่)
-        if (isLocationUsedByAnother(req.getShop().getId(), lat, lng)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "ตำแหน่งนี้ถูกใช้ในคำขอของร้านอื่นแล้ว");
+        // กันพิกัดซ้ำในตาราง requests (ร้านอื่นใช้พิกัดเดียวกันอยู่)
+        if (isLocationUsedByAnother(shop.getId(), lat, lng)) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "ตำแหน่งนี้ถูกใช้ในคำขอของร้านอื่นแล้ว"
+            );
         }
 
-        // บันทึก
+        // 5) default status กัน null
+        if (req.getStatus() == null || req.getStatus().isBlank()) {
+            req.setStatus("PENDING");
+        }
+
+        // 6) บันทึก
         Request saved = repository.save(req);
-        return mapToDTO(saved);  // เติม resuId ให้ด้วยถ้ามี
+        return mapToDTO(saved);
     }
 
     @Transactional
     public Request updateStatus(Long requestId, String status) {
         Request request = repository.findById(requestId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Request not found with id: " + requestId));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Request not found with id: " + requestId
+                ));
         request.setStatus(status);
         return repository.save(request);
     }
@@ -86,15 +118,20 @@ public class RequestService {
     @Transactional
     public Request updateAppointmentDay(Long requestId, LocalDate appointmentDay) {
         Request request = repository.findById(requestId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Request not found with id: " + requestId));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Request not found with id: " + requestId
+                ));
         request.setAppointmentDay(appointmentDay);
         return repository.save(request);
     }
 
     @Transactional
-    public void updateAppointmentDayForGroup(Long shopId, LocalDate dateInspection, LocalDate appointmentDay) {
-        List<Request> requests = repository.findByShopIdAndDateInspection(shopId, dateInspection);
+    public void updateAppointmentDayForGroup(Long shopId,
+                                             LocalDate dateInspection,
+                                             LocalDate appointmentDay) {
+        List<Request> requests =
+                repository.findByShopIdAndDateInspection(shopId, dateInspection);
         for (Request req : requests) {
             req.setAppointmentDay(appointmentDay);
         }
@@ -102,8 +139,11 @@ public class RequestService {
     }
 
     @Transactional
-    public void updateStatusByAppointmentDayAndShop(Long shopId, LocalDate appointmentDay, String status) {
-        List<Request> requests = repository.findByShopIdAndAppointmentDay(shopId, appointmentDay);
+    public void updateStatusByAppointmentDayAndShop(Long shopId,
+                                                    LocalDate appointmentDay,
+                                                    String status) {
+        List<Request> requests =
+                repository.findByShopIdAndAppointmentDay(shopId, appointmentDay);
         for (Request req : requests) {
             req.setStatus(status);
         }
@@ -111,7 +151,7 @@ public class RequestService {
     }
 
     // ==========================
-    // Grouped endpoints (คงลอจิกเดิม)
+    // Grouped endpoints
     // ==========================
 
     public List<GroupedRequestDTO> getRequestsGroupedByDateInspectionByShop(Long shopId) {
@@ -150,8 +190,11 @@ public class RequestService {
                 .collect(Collectors.toList());
     }
 
-    public GroupedRequestDTO getRequestsGroupedByDateInspectionByShopAndDate(Long shopId, LocalDate dateInspection) {
-        List<Request> requests = repository.findByShopIdAndDateInspection(shopId, dateInspection);
+    public GroupedRequestDTO getRequestsGroupedByDateInspectionByShopAndDate(
+            Long shopId, LocalDate dateInspection) {
+
+        List<Request> requests =
+                repository.findByShopIdAndDateInspection(shopId, dateInspection);
 
         List<RequestsDTO> dtoList = requests.stream()
                 .map(this::mapToDTO)
@@ -168,15 +211,20 @@ public class RequestService {
     private double[] parseLatLng(String shopLocation) {
         String[] parts = shopLocation.split(",");
         if (parts.length != 2) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "shopLocation format must be 'lat,lng'");
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "shopLocation format must be 'lat,lng'"
+            );
         }
         try {
             double lat = Double.parseDouble(parts[0].trim());
             double lng = Double.parseDouble(parts[1].trim());
             return new double[]{lat, lng};
         } catch (NumberFormatException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid latitude/longitude");
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Invalid latitude/longitude"
+            );
         }
     }
 
@@ -188,6 +236,7 @@ public class RequestService {
 
     /** map Entity → DTO และเติม resuId (ถ้ามีผลตรวจ) */
     private RequestsDTO mapToDTO(Request r) {
+
         ShopsDTO shopDTO = new ShopsDTO(
                 r.getShop().getId(),
                 r.getShop().getShopName(),
