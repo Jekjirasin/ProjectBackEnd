@@ -34,48 +34,68 @@ public class ResultController {
         this.service = service;
     }
 
-    // ✅ สร้างผลตรวจ (ส่ง id กลับ)
+    // =========================
+    // ✅ สร้างผลตรวจ
+    // =========================
     @PostMapping("/create")
     public ResponseEntity<ResultsDTO> createResult(@RequestBody Results result) {
         Results saved = service.saveResult(result);
-        ResultsDTO dto = ResultsDTO.fromEntity(saved); // ยังใช้ได้ตามเดิม
+        ResultsDTO dto = ResultsDTO.fromEntity(saved);
         return ResponseEntity
                 .created(URI.create("/api/results/" + saved.getId()))
                 .body(dto);
     }
 
-    // ✅ ดึงผลตรวจตาม shopId -> ส่ง DTO (แก้ 500/Lazy/recursion)
+    // =========================
+    // ✅ ดึงผลตรวจตาม shopId (DTO เท่านั้น)
+    // =========================
     @GetMapping("/shop/{shopId}")
     public ResponseEntity<List<ResultsDTO>> getResultsByShop(@PathVariable Long shopId) {
         return ResponseEntity.ok(service.getResultsByShopDto(shopId));
     }
 
-    // ✅ ดึงผลตรวจตามชื่อผัก (คงเดิม ถ้าจำเป็นค่อยเปลี่ยนเป็น DTO)
+    // =========================
+    // ❌ เดิมคืน entity → ✅ เปลี่ยนเป็น DTO
+    // =========================
     @GetMapping("/vege/{vegeName}")
-    public List<Results> getResultsByVege(@PathVariable String vegeName) {
-        return service.getResultsByVegeName(vegeName);
+    public List<ResultsDTO> getResultsByVege(@PathVariable String vegeName) {
+        return service.getResultsByVegeName(vegeName)
+                .stream()
+                .map(ResultsDTO::fromEntity)
+                .toList();
     }
 
-    // ✅ ดึงผลตรวจทั้งหมด (คงเดิม)
+    // =========================
+    // ❌ เดิมคืน entity → ✅ เปลี่ยนเป็น DTO
+    // =========================
     @GetMapping("/all")
-    public List<Results> getAllResults() {
-        return service.getAllResults();
+    public List<ResultsDTO> getAllResults() {
+        return service.getAllResultsDTO();
     }
 
-    // ✅ เฉพาะ shopname + location (สำหรับ map)
+    // =========================
+    // ✅ shopname + location (map)
+    // =========================
     @GetMapping("/shops-location")
     public List<ResultsDTO> getShopnameAndLocation() {
         return service.getShopnameAndLocation();
     }
 
-    // ✅ หมุดทั้งหมดที่ “ผ่าน” + มีพิกัด (ไม่บังคับส่ง shopId)
+    // =========================
+    // ✅ หมุดที่ APPROVED เท่านั้น
+    // =========================
     @GetMapping("/map-pins")
     public List<ResultsDTO> getApprovedShopsForMapAll() {
-    return service.getApprovedShopsForMap(null); 
-}
+        return service.getApprovedShopsForMap(null);
+    }
 
-    // ---------- 📄 Certificate ----------
-    @PostMapping(path = "/{id}/certificate-upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    // =========================
+    // 📄 Certificate Upload
+    // =========================
+    @PostMapping(
+            path = "/{id}/certificate-upload",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
     public ResponseEntity<String> uploadCertificate(
             @PathVariable Long id,
             @RequestPart("file") MultipartFile file
@@ -87,7 +107,9 @@ public class ResultController {
         return ResponseEntity.ok("Uploaded certificate for result " + id);
     }
 
-    // ✅ เส้นหลัก: ดาวน์โหลดใบรับรองด้วย resu_id เดียว
+    // =========================
+    // ✅ ดาวน์โหลดใบรับรอง (resu_id เดียว)
+    // =========================
     @GetMapping("/{resuId}/certificate")
     public ResponseEntity<byte[]> getCertificate(@PathVariable Long resuId) {
         byte[] data = service.getCertificate(resuId);
@@ -107,7 +129,9 @@ public class ResultController {
         return new ResponseEntity<>(data, headers, HttpStatus.OK);
     }
 
-    // ---------- (ออปชัน) เส้นที่ใช้คู่กับ shopId ----------
+    // =========================
+    // (ออปชัน) เส้นคู่ shopId
+    // =========================
     @PostMapping(
             path = "/shop/{shopId}/result/{resuId}/certificate-upload",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE
