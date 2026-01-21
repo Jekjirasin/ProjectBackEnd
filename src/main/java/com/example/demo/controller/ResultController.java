@@ -55,18 +55,15 @@ public class ResultController {
     }
 
     // =========================
-    // ❌ เดิมคืน entity → ✅ เปลี่ยนเป็น DTO
+    // ✅ ดึงผลตรวจตามชื่อผัก (DTO เท่านั้น)
     // =========================
     @GetMapping("/vege/{vegeName}")
     public List<ResultsDTO> getResultsByVege(@PathVariable String vegeName) {
-        return service.getResultsByVegeName(vegeName)
-                .stream()
-                .map(ResultsDTO::fromEntity)
-                .toList();
+        return service.getResultsByVegeNameDto(vegeName);
     }
 
     // =========================
-    // ❌ เดิมคืน entity → ✅ เปลี่ยนเป็น DTO
+    // ✅ ดึงผลตรวจทั้งหมด (DTO เท่านั้น)
     // =========================
     @GetMapping("/all")
     public List<ResultsDTO> getAllResults() {
