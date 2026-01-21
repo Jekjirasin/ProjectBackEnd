@@ -1,5 +1,6 @@
 package com.example.demo.entity;
 
+import jakarta.persistence.Basic;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -39,6 +40,7 @@ public class Results {
 
     // ✅ FIX: ใช้ @Lob อย่างเดียว (รองรับ MySQL + PostgreSQL)
     @Lob
+    @Basic(fetch = FetchType.EAGER)
     @Column(name = "resu_certificate")
     private byte[] certificate;
 

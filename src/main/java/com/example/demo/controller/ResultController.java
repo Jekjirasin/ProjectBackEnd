@@ -1,15 +1,28 @@
 package com.example.demo.controller;
 
-import com.example.demo.dto.ResultsDTO;
-import com.example.demo.entity.Results;
-import com.example.demo.service.ResultsService;
-import org.springframework.http.*;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;
+
+import org.springframework.http.CacheControl;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.example.demo.dto.ResultsDTO;
+import com.example.demo.entity.Results;
+import com.example.demo.service.ResultsService;
 
 @RestController
 @RequestMapping("/api/results")
@@ -58,8 +71,8 @@ public class ResultController {
     // ✅ หมุดทั้งหมดที่ “ผ่าน” + มีพิกัด (ไม่บังคับส่ง shopId)
     @GetMapping("/map-pins")
     public List<ResultsDTO> getApprovedShopsForMapAll() {
-        return service.getApprovedShopsForMap("ผ่าน", null);
-    }
+    return service.getApprovedShopsForMap(null); 
+}
 
     // ---------- 📄 Certificate ----------
     @PostMapping(path = "/{id}/certificate-upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
