@@ -1,12 +1,13 @@
 package com.example.demo.repository;
 
-import com.example.demo.entity.Request;
+import java.time.LocalDate;
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.time.LocalDate;
-import java.util.List;
+import com.example.demo.entity.Request;
 
 public interface RequestRepository extends JpaRepository<Request, Long> {
 
@@ -27,7 +28,7 @@ public interface RequestRepository extends JpaRepository<Request, Long> {
           = ROUND( CAST(:lat AS numeric), 6 )
       AND ROUND( (split_part(r.req_shoplocation, ',', 2))::numeric, 6 )
           = ROUND( CAST(:lng AS numeric), 6 )
-      AND (r.req_status IN ('pending', 'approved') OR r.req_status IS NULL)
+      AND (r.req_status IN ('PENDING', 'APPROVED') OR r.req_status IS NULL)
     """, nativeQuery = true)
 Integer existsSameLocationInRequests(@Param("shopId") Long shopId,
                                      @Param("lat") double lat,
