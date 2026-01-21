@@ -38,7 +38,7 @@ public class Results {
     @Column(name = "resu_result")
     private String result;
 
-    // ✅ FIX: ใช้ @Lob อย่างเดียว (รองรับ MySQL + PostgreSQL)
+    // ✅ FIX: บังคับโหลด LOB ทันที กัน Unable to access lob stream
     @Lob
     @Basic(fetch = FetchType.EAGER)
     @Column(name = "resu_certificate")

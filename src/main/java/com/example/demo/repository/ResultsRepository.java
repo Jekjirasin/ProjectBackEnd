@@ -13,21 +13,31 @@ import com.example.demo.entity.Results;
 
 public interface ResultsRepository extends JpaRepository<Results, Long> {
 
-    // ✅ โหลด shop มากับผล เพื่อกัน LazyInitializationException ตอน map → DTO
+    // โหลด shop มาด้วย (กัน LazyInitializationException)
     @EntityGraph(attributePaths = {"shop"})
     List<Results> findByShop_Id(Long shopId);
 
     List<Results> findByVegeName(String vegeName);
+
     Optional<Results> findByRequest_Id(Long requestId);
+
     Optional<Results> findByIdAndShop_Id(Long id, Long shopId);
 
-    // ✅ ใช้กับ ResultsService.getShopnameAndLocation()
-    @Query("SELECT new com.example.demo.dto.ResultsDTO(" +
-           " r.id, r.shop.id, r.shopName, r.vegeName, r.result, r.location ) " +
-           "FROM Results r")
+    // ใช้กับ ResultsService.getShopnameAndLocation()
+    @Query("""
+        SELECT new com.example.demo.dto.ResultsDTO(
+            r.id,
+            r.shop.id,
+            r.shopName,
+            r.vegeName,
+            r.result,
+            r.location
+        )
+        FROM Results r
+    """)
     List<ResultsDTO> findShopnameAndLocation();
 
-    // ✅ ใช้กับ ResultsService.getApprovedShopsForMap(...)
+    // ใช้กับ ResultsService.getApprovedShopsForMap(...)
     @Query("""
         SELECT DISTINCT new com.example.demo.dto.ResultsDTO(
             r.id,
@@ -38,11 +48,13 @@ public interface ResultsRepository extends JpaRepository<Results, Long> {
             r.location
         )
         FROM Results r
-        WHERE r.result LIKE :approved
+        WHERE UPPER(r.result) = :approved
           AND r.location IS NOT NULL
           AND r.location <> ''
           AND (:shopId IS NULL OR r.shop.id = :shopId)
     """)
-    List<ResultsDTO> findApprovedShopsForMap(@Param("approved") String approved,
-                                             @Param("shopId") Long shopId);
+    List<ResultsDTO> findApprovedShopsForMap(
+            @Param("approved") String approved,
+            @Param("shopId") Long shopId
+    );
 }
