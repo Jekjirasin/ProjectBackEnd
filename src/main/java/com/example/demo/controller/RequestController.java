@@ -114,12 +114,6 @@ public List<GroupedRequestDTO> getGroupedByShop(@PathVariable Long shopId) {
         return toDto(service.updateAppointmentDay(id, appointmentDay));
     }
 
-    @GetMapping("/grouped-by-date/{shopId}/{dateInspection}")
-    public GroupedRequestDTO getGroupedByDateByShopAndDate(@PathVariable Long shopId,
-                                                            @PathVariable String dateInspection) {
-        LocalDate date = LocalDate.parse(dateInspection);
-        return service.getRequestsGroupedByDateInspectionByShopAndDate(shopId, date);
-    }
 
     // -------- helper แปลง Entity → DTO --------
     private RequestsDTO toDto(Request saved) {
