@@ -1,5 +1,7 @@
 package com.example.demo.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Basic;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -38,9 +40,10 @@ public class Results {
     @Column(name = "resu_result")
     private String result;
 
-    // ✅ FIX: บังคับโหลด LOB ทันที กัน Unable to access lob stream
+    // ✅ แก้ปัญหา Unable to access lob stream
     @Lob
     @Basic(fetch = FetchType.EAGER)
+    @JsonIgnore   // 👈 สำคัญมาก
     @Column(name = "resu_certificate")
     private byte[] certificate;
 
@@ -53,30 +56,76 @@ public class Results {
     // ---------------------------
     // Getter & Setter
     // ---------------------------
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
 
-    public Shops getShop() { return shop; }
-    public void setShop(Shops shop) { this.shop = shop; }
+    public Long getId() { 
+        return id; 
+    }
 
-    public String getShopName() { return shopName; }
-    public void setShopName(String shopName) { this.shopName = shopName; }
+    public void setId(Long id) { 
+        this.id = id; 
+    }
 
-    public Request getRequest() { return request; }
-    public void setRequest(Request request) { this.request = request; }
+    public Shops getShop() { 
+        return shop; 
+    }
 
-    public String getVegeName() { return vegeName; }
-    public void setVegeName(String vegeName) { this.vegeName = vegeName; }
+    public void setShop(Shops shop) { 
+        this.shop = shop; 
+    }
 
-    public String getResult() { return result; }
-    public void setResult(String result) { this.result = result; }
+    public String getShopName() { 
+        return shopName; 
+    }
 
-    public byte[] getCertificate() { return certificate; }
-    public void setCertificate(byte[] certificate) { this.certificate = certificate; }
+    public void setShopName(String shopName) { 
+        this.shopName = shopName; 
+    }
 
-    public String getLocation() { return location; }
-    public void setLocation(String location) { this.location = location; }
+    public Request getRequest() { 
+        return request; 
+    }
 
-    public String getDateInspection() { return dateInspection; }
-    public void setDateInspection(String dateInspection) { this.dateInspection = dateInspection; }
+    public void setRequest(Request request) { 
+        this.request = request; 
+    }
+
+    public String getVegeName() { 
+        return vegeName; 
+    }
+
+    public void setVegeName(String vegeName) { 
+        this.vegeName = vegeName; 
+    }
+
+    public String getResult() { 
+        return result; 
+    }
+
+    public void setResult(String result) { 
+        this.result = result; 
+    }
+
+    public byte[] getCertificate() { 
+        return certificate; 
+    }
+
+    public void setCertificate(byte[] certificate) { 
+        this.certificate = certificate; 
+    }
+
+    public String getLocation() { 
+        return location; 
+    }
+
+    public void setLocation(String location) { 
+        this.location = location; 
+    }
+
+    public String getDateInspection() { 
+        return dateInspection; 
+    }
+
+    public void setDateInspection(String dateInspection) { 
+        this.dateInspection = dateInspection; 
+    }
 }
