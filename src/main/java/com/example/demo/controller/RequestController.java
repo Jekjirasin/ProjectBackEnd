@@ -64,8 +64,8 @@ public class RequestController {
         return service.getRequestsGroupedByDate(shopId);
     }
     // ✅ เพิ่มตัวนี้สำหรับหน้า shop
-@GetMapping("/grouped-by-date/{shopId}")
-public List<GroupedRequestDTO> getGroupedByDateByShop(@PathVariable Long shopId) {
+@GetMapping("/grouped-by-shop/{shopId}")
+public List<GroupedRequestDTO> getGroupedByShop(@PathVariable Long shopId) {
     return service.getRequestsGroupedByDate(shopId);
 }
     // 📌 ดึงคำขอตามสถานะ
