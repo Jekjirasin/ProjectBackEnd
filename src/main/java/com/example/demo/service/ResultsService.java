@@ -1,5 +1,12 @@
 package com.example.demo.service;
 
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.example.demo.dto.ResultsDTO;
 import com.example.demo.entity.Request;
 import com.example.demo.entity.Results;
@@ -7,12 +14,6 @@ import com.example.demo.entity.Shops;
 import com.example.demo.repository.RequestRepository;
 import com.example.demo.repository.ResultsRepository;
 import com.example.demo.repository.ShopRepository;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.Optional;
 
 @Service
 public class ResultsService {
@@ -21,7 +22,7 @@ public class ResultsService {
     private final ShopRepository shopRepository;
     private final RequestRepository requestRepository;
 
-    @Value("${server.public-base-url:http://10.32.110.29:8081}")
+    @Value("${server.public-base-url:http://localhost:8080}")
     private String publicBaseUrl;
 
     public ResultsService(
@@ -35,52 +36,24 @@ public class ResultsService {
     }
 
     // =========================================================
-    // 🟢 CREATE / SAVE
+    // 🟢 CREATE
     // =========================================================
 
     @Transactional
     public Results saveResult(Results result) {
+
         if (result.getShop() == null || result.getShop().getId() == null) {
             throw new IllegalArgumentException("shop.id is required");
         }
 
         Shops managedShop = shopRepository.findById(result.getShop().getId())
-                .orElseThrow(() ->
-                        new IllegalArgumentException("Shop not found: " + result.getShop().getId()));
+                .orElseThrow(() -> new IllegalArgumentException("Shop not found"));
 
         result.setShop(managedShop);
 
         if (result.getRequest() != null && result.getRequest().getId() != null) {
             Request req = requestRepository.findById(result.getRequest().getId())
-                    .orElseThrow(() ->
-                            new IllegalArgumentException("Request not found: " + result.getRequest().getId()));
-            result.setRequest(req);
-        }
-
-        // ✅ บังคับสถานะเป็นตัวพิมพ์ใหญ่ (APPROVED / REJECTED / PENDING)
-        if (result.getResult() != null) {
-            result.setResult(result.getResult().toUpperCase());
-        }
-
-        return repository.save(result);
-    }
-
-    @Transactional
-    public Results saveResultWithShopId(Results result, Long shopId) {
-        if (shopId == null) {
-            throw new IllegalArgumentException("shopId is required");
-        }
-
-        Shops managedShop = shopRepository.findById(shopId)
-                .orElseThrow(() ->
-                        new IllegalArgumentException("Shop not found: " + shopId));
-
-        result.setShop(managedShop);
-
-        if (result.getRequest() != null && result.getRequest().getId() != null) {
-            Request req = requestRepository.findById(result.getRequest().getId())
-                    .orElseThrow(() ->
-                            new IllegalArgumentException("Request not found: " + result.getRequest().getId()));
+                    .orElseThrow(() -> new IllegalArgumentException("Request not found"));
             result.setRequest(req);
         }
 
@@ -92,14 +65,12 @@ public class ResultsService {
     }
 
     // =========================================================
-    // 🟢 READ (DTO ONLY – กัน LOB พัง)
+    // 🟢 READ (DTO SAFE – ไม่โหลด LOB ตรงๆ)
     // =========================================================
 
-    /**
-     * ใช้กับหน้า /api/results/shop/{shopId}
-     */
     @Transactional(readOnly = true)
     public List<ResultsDTO> getResultsByShopDto(Long shopId) {
+
         return repository.findByShop_Id(shopId).stream().map(r -> {
 
             String certUrl = null;
@@ -120,9 +91,7 @@ public class ResultsService {
         }).toList();
     }
 
-    /**
-     * ใช้กับ /api/results/all
-     */
+    // 🔥 ตัวนี้ที่ error บอกว่าไม่มี
     @Transactional(readOnly = true)
     public List<ResultsDTO> getAllResultsDTO() {
         return repository.findAll().stream()
@@ -130,9 +99,7 @@ public class ResultsService {
                 .toList();
     }
 
-    /**
-     * ใช้กับ /api/results/vege/{vegeName}
-     */
+    // 🔥 ตัวนี้ที่ error บอกว่าไม่มี
     @Transactional(readOnly = true)
     public List<ResultsDTO> getResultsByVegeNameDto(String vegeName) {
         return repository.findByVegeName(vegeName).stream()
@@ -140,17 +107,11 @@ public class ResultsService {
                 .toList();
     }
 
-    /**
-     * ใช้กับหน้าแผนที่ (เฉพาะ APPROVED)
-     */
     @Transactional(readOnly = true)
     public List<ResultsDTO> getApprovedShopsForMap(Long shopId) {
         return repository.findApprovedShopsForMap("APPROVED", shopId);
     }
 
-    /**
-     * shopname + location (สำหรับ map แบบไม่กรองสถานะ)
-     */
     @Transactional(readOnly = true)
     public List<ResultsDTO> getShopnameAndLocation() {
         return repository.findShopnameAndLocation();
@@ -163,8 +124,7 @@ public class ResultsService {
     @Transactional
     public Results setCertificate(Long resultId, byte[] pdfBytes) {
         Results r = repository.findById(resultId)
-                .orElseThrow(() ->
-                        new IllegalArgumentException("Result not found: " + resultId));
+                .orElseThrow(() -> new IllegalArgumentException("Result not found"));
 
         r.setCertificate(pdfBytes);
         return repository.save(r);
@@ -172,6 +132,23 @@ public class ResultsService {
 
     @Transactional(readOnly = true)
     public byte[] getCertificate(Long resultId) {
+        return repository.findById(resultId)
+                .map(Results::getCertificate)
+                .orElse(null);
+    }
+
+    // ✅ ป้องกัน LOB error
+    @Transactional(readOnly = true)
+    public byte[] getCertificateByRequest(Long requestId) {
+
+        Optional<Long> resultIdOpt = repository.findResultIdByRequestId(requestId);
+
+        if (resultIdOpt.isEmpty()) {
+            return null;
+        }
+
+        Long resultId = resultIdOpt.get();
+
         return repository.findById(resultId)
                 .map(Results::getCertificate)
                 .orElse(null);
@@ -185,8 +162,7 @@ public class ResultsService {
     @Transactional
     public Results setCertificateFor(Long resuId, Long shopId, byte[] pdfBytes) {
         Results r = repository.findByIdAndShop_Id(resuId, shopId)
-                .orElseThrow(() ->
-                        new IllegalArgumentException("Result not found for this shop"));
+                .orElseThrow(() -> new IllegalArgumentException("Result not found"));
 
         r.setCertificate(pdfBytes);
         return repository.save(r);
@@ -195,13 +171,6 @@ public class ResultsService {
     @Transactional(readOnly = true)
     public byte[] getCertificateFor(Long resuId, Long shopId) {
         return repository.findByIdAndShop_Id(resuId, shopId)
-                .map(Results::getCertificate)
-                .orElse(null);
-    }
-
-    @Transactional(readOnly = true)
-    public byte[] getCertificateByRequest(Long requestId) {
-        return repository.findByRequest_Id(requestId)
                 .map(Results::getCertificate)
                 .orElse(null);
     }

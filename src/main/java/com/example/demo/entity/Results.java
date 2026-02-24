@@ -40,7 +40,7 @@ public class Results {
 
     // ✅ FIX: บังคับโหลด LOB ทันที กัน Unable to access lob stream
     @Lob
-    @Basic(fetch = FetchType.EAGER)
+    @Basic(fetch = FetchType.LAZY)
     @Column(name = "resu_certificate")
     private byte[] certificate;
 

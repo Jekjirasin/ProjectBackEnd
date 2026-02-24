@@ -18,12 +18,23 @@ public interface ResultsRepository extends JpaRepository<Results, Long> {
     List<Results> findByShop_Id(Long shopId);
 
     List<Results> findByVegeName(String vegeName);
-
     Optional<Results> findByRequest_Id(Long requestId);
+    // ❌ ของเก่า (โหลด entity ทั้งก้อน + LOB เสี่ยงพัง)
+    // Optional<Results> findByRequest_Id(Long requestId);
+
+    // ✅ ของใหม่ (ดึงแค่ id ไม่โหลด certificate)
+    @Query("""
+        SELECT r.id FROM Results r
+        WHERE r.request.id = :requestId
+    """)
+    Optional<Long> findResultIdByRequestId(@Param("requestId") Long requestId);
 
     Optional<Results> findByIdAndShop_Id(Long id, Long shopId);
 
-    // ใช้กับ ResultsService.getShopnameAndLocation()
+    // ============================
+    // DTO Queries
+    // ============================
+
     @Query("""
         SELECT new com.example.demo.dto.ResultsDTO(
             r.id,
@@ -37,7 +48,6 @@ public interface ResultsRepository extends JpaRepository<Results, Long> {
     """)
     List<ResultsDTO> findShopnameAndLocation();
 
-    // ใช้กับ ResultsService.getApprovedShopsForMap(...)
     @Query("""
         SELECT DISTINCT new com.example.demo.dto.ResultsDTO(
             r.id,
