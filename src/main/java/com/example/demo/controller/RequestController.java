@@ -1,25 +1,17 @@
 package com.example.demo.controller;
 
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Map;          // ✅ เพิ่ม import นี้
-
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.example.demo.dto.AllRequestsGroupedDTO;
-import com.example.demo.dto.GroupedRequestDTO;
-import com.example.demo.dto.RequestsDTO;
-import com.example.demo.dto.ShopsDTO;
 import com.example.demo.entity.Request;
 import com.example.demo.service.RequestService;
+import org.springframework.http.ResponseEntity;          // ✅ เพิ่ม import นี้
+import org.springframework.web.bind.annotation.*;
+import com.example.demo.dto.RequestsDTO;
+import com.example.demo.dto.GroupedRequestDTO;
+import com.example.demo.dto.AllRequestsGroupedDTO;
+import com.example.demo.dto.ShopsDTO;
+
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/requests")
@@ -63,11 +55,7 @@ public class RequestController {
     public List<GroupedRequestDTO> getRequestsGrouped(@PathVariable Long shopId) {
         return service.getRequestsGroupedByDate(shopId);
     }
-    // ✅ เพิ่มตัวนี้สำหรับหน้า shop
-@GetMapping("/grouped-by-shop/{shopId}")
-public List<GroupedRequestDTO> getGroupedByShop(@PathVariable Long shopId) {
-    return service.getRequestsGroupedByDate(shopId);
-}
+
     // 📌 ดึงคำขอตามสถานะ
     @GetMapping("/status/{status}")
     public List<Request> getRequestsByStatus(@PathVariable String status) {
@@ -114,6 +102,12 @@ public List<GroupedRequestDTO> getGroupedByShop(@PathVariable Long shopId) {
         return toDto(service.updateAppointmentDay(id, appointmentDay));
     }
 
+    @GetMapping("/grouped-by-date/{shopId}/{dateInspection}")
+    public GroupedRequestDTO getGroupedByDateByShopAndDate(@PathVariable Long shopId,
+                                                            @PathVariable String dateInspection) {
+        LocalDate date = LocalDate.parse(dateInspection);
+        return service.getRequestsGroupedByDateInspectionByShopAndDate(shopId, date);
+    }
 
     // -------- helper แปลง Entity → DTO --------
     private RequestsDTO toDto(Request saved) {

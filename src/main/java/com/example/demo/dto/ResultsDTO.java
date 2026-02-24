@@ -1,22 +1,21 @@
 package com.example.demo.dto;
 
-public class ResultsDTO {
+import com.example.demo.entity.Results;
 
+public class ResultsDTO {
     private Long resuId;
     private Long shopId;
     private String shopName;
     private String vegeName;
     private String result;
     private String location;
-    private String dateInspection;
+    private String dateInspection;   // ✅ ตรงกับ entity
     private String certificateUrl;
 
     public ResultsDTO() {}
 
-    public ResultsDTO(Long resuId, Long shopId, String shopName,
-                      String vegeName, String result,
-                      String location, String dateInspection,
-                      String certificateUrl) {
+    public ResultsDTO(Long resuId, Long shopId, String shopName, String vegeName,
+                      String result, String location, String dateInspection, String certificateUrl) {
         this.resuId = resuId;
         this.shopId = shopId;
         this.shopName = shopName;
@@ -27,7 +26,24 @@ public class ResultsDTO {
         this.certificateUrl = certificateUrl;
     }
 
-    // getters & setters
+    public static ResultsDTO fromEntity(Results r) {
+        if (r == null) return null;
+        return new ResultsDTO(
+                r.getId(),
+                (r.getShop() != null ? r.getShop().getId() : null),
+                r.getShopName(),
+                r.getVegeName(),
+                r.getResult(),
+                r.getLocation(),
+                r.getDateInspection(),   // ✅ ใช้ชื่อจริง
+                null
+        );
+    }
+    public ResultsDTO(Long resuId, Long shopId, String shopName, String vegeName,
+                  String result, String location) {
+    this(resuId, shopId, shopName, vegeName, result, location, null, null);
+    }
+    // -------- getters & setters --------
     public Long getResuId() { return resuId; }
     public void setResuId(Long resuId) { this.resuId = resuId; }
 

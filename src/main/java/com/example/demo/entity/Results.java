@@ -38,7 +38,7 @@ public class Results {
     @Column(name = "resu_result")
     private String result;
 
-    // 🔥 เปลี่ยนเป็น EAGER ป้องกัน LOB crash
+    // ✅ FIX: บังคับโหลด LOB ทันที กัน Unable to access lob stream
     @Lob
     @Basic(fetch = FetchType.EAGER)
     @Column(name = "resu_certificate")
@@ -50,7 +50,9 @@ public class Results {
     @Column(name = "resu_dateinspection")
     private String dateInspection;
 
-    // getters & setters
+    // ---------------------------
+    // Getter & Setter
+    // ---------------------------
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
